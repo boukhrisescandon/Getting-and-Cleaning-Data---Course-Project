@@ -1,8 +1,9 @@
 # Getting and Cleaning Data - Course-Project
 
 This repository contains two files:
-1.  run_analysis.R
-2.  code_book.Rmd
+
+1. run_analysis.R
+2. code_book.Rmd
 
 Please refer to code_book.Rmd for detailed information about the project.
 
