@@ -1,16 +1,16 @@
 ## Getting and Cleaning Data - Course Project
 ## November 16, 2015
 
-######### Clear workspace and initialize needed libraries #########
+######### Clear workspace, set working directory, and initialize needed libraries #########
 
 rm(list = ls(all = TRUE))
+
+setwd("~/Desktop/Johns Hopkins - Data Science Certification/03_Getting and Cleaning Data/Course Project")
 
 library(data.table)
 library(plyr)
 library(markdown)
 library(knitr)
-
-
 
 ######### Load data #########
 
@@ -25,51 +25,29 @@ y_test <- read.table("UCI HAR Dataset/test/y_test.txt", header = FALSE)
 subject_test <- read.table("UCI HAR Dataset/test/subject_test.txt", header = FALSE)
 
 #Features list for the column names
-features <- read.table("UCI HAR Dataset/features.txt", header = FALSE)
+data_features <- read.table("UCI HAR Dataset/features.txt", header = FALSE)
 
-#Modify the column names on the training and testing sets
-colnames(x_train) <- t(features[2])
-colnames(x_test) <- t(features[2])
+subject <- rbind(subject_train, subject_test)
+features <- rbind(x_train, x_test)
+activity <- rbind(y_train, y_test)
 
-#Add activites and participants to the x_train and x_test sets
-x_train$activities <- y_train[, 1]
-x_train$participants <- subject_train[, 1]
-x_test$activities <- y_test[, 1]
-x_test$participants <- subject_test[, 1]
+#Modifiy the column names
+names(subject) <- c("subject")
+names(activity) <- c("activity")
+names(features) <- data_features$V2
 
+######### Merge the training and test sets into one data set #########
 
+subject_activity <- cbind(subject, activity)
+merged <- cbind(features, subject_activity)
 
-######### Merge the training and test sets into one data set and remove duplicates#########
+######### Only keep mean and standard deviation #########
 
-merged <- rbind(x_train, x_test)
-duplicated(colnames(merged))
-merged <- merged[, !duplicated(colnames(merged))]
-
-
-
-######### Extract measurements on the mean and standard deviation for each measurement #########
-
-mean <- grep("mean()", names(merged), value = FALSE, fixed = TRUE)
-mean <- append(merged, 471:477)
-#InstrumentMeanMatrix <- merged[mean]
-
-std <- grep("std()", names(merged), value = FALSE)
-#InstrumentSTDMatrix <- merged[std]
+mean_std_names <- data_features$V2[grep("mean\\(\\)|std\\(\\)", data_features$V2)]
 
 
-
-######### Use descriptive activity names to name the activites in the data set #########
-
-activity_labels <- read.table("UCI HAR Dataset/activity_labels.txt")
-
-merged$activities[merged$activities == 1] <- as.character(activity_labels[1,2])
-merged$activities[merged$activities == 2] <- as.character(activity_labels[2,2])
-merged$activities[merged$activities == 3] <- as.character(activity_labels[3,2])
-merged$activities[merged$activities == 4] <- as.character(activity_labels[4,2])
-merged$activities[merged$activities == 5] <- as.character(activity_labels[5,2])
-merged$activities[merged$activities == 6] <- as.character(activity_labels[6,2])
-merged$activities <- as.factor(merged$activities)
-
+include_names <- c(as.character(mean_std_names), "subject", "activity")
+merged <- subset(merged, select=include_names)
 
 
 ######### Label the data set with descriptive variable names #########
@@ -77,15 +55,21 @@ merged$activities <- as.factor(merged$activities)
 names(merged) <- gsub("Acc", "Acceleration", names(merged))
 names(merged) <- gsub("Mag", "Magnitude", names(merged))
 names(merged) <- gsub("Gyro", "Gyroscope", names(merged))
-names(merged) <- gsub("^t", "time", names(merged))
-names(merged) <- gsub("^f", "frequency", names(merged))
-
+names(merged) <- gsub("^t", "Time", names(merged))
+names(merged) <- gsub("^f", "Frequency", names(merged))
+names(merged) <- gsub("BodyBody", "Body", names(merged))
 
 
 ######### Create a second independent tidy data set with the average of each variable #########
 ######### for each activity and each subject.                                         ######### 
 
-merged.dt <- data.table(merged)
-tidy_data <- merged.dt[, lapply(.SD, mean), by = 'participants,activities']
+merged_final <- aggregate(. ~subject + activity, merged, mean)
+tidy_data <- merged_final[order(merged_final$subject, merged_final$activity), ]
 write.table(tidy_data, file = "tidy_data.txt", row.names = FALSE)
+
+
+######### Create Codebook #########
+
+knit2html("code_book.Rmd");
+
 
