@@ -1,8 +1,6 @@
 ---
-title: "Code Book"
-author: "Getting and Cleaning Data - Course Project"
+title: "Code Book for Getting and Cleaning Data - Course Project"
 date: "November 22, 2015"
-output: html_document
 ---
 
 The purpose of this project was to demontrate the ability to collect, work with, and clean a data set. The goal was to prepare tidy data that can be used for later analysis.
